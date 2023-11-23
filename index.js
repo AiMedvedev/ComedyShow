@@ -1,89 +1,54 @@
 import http from 'node:http';
 import fs from 'node:fs/promises';
+import { sendData, sendError } from './modules/send.js';
+import { checkFile } from './modules/checkFile.js';
+import { handleAddClient } from './modules/handleAddClient.js';
+import { handleComediansRequest } from './modules/handleComediansRequest.js';
+import { handleClientsRequest } from './modules/handleClientsRequest.js';
+import { handleUpdateClient } from './modules/handleUpdateClient.js';
 
 const PORT = '8080';
 const COMEDIANS = './comedians.json';
-const CLIENTS = './clients.json';
+export const CLIENTS = './clients.json';
 
-const checkFiles = async () => {
-    
-    try {
-        await fs.access(COMEDIANS)
-    } catch (error) {
-        console.error(`Файл ${COMEDIANS} не найден.`);
-        return false;
-    }
-
-    try {
-        await fs.access(CLIENTS)
-    } catch (error) {
-        await fs.writeFile(CLIENTS, JSON.stringify([]));
-        console.log(`Файл ${CLIENTS} был создан.`);
-        return false;
-    }
-
-    return true;
-}
-
-const sendData = (res, data) => {
-    res.writeHead(200, {
-        "Content-Type": "text/json; charset=utf-8",
-        "Access-Control-Allow-Origin": "*"
-    });
-
-    res.end(data);
-}
-
-const sendError = (res, statusCode, errMessage) => {
-    res.writeHead(statusCode, {
-        "Content-Type": "text/plain; charset=utf-8"
-    });
-    res.end(errMessage);
-}
 
 const startServer = async () => {
-    if (!(await checkFiles())) {
+    if (!(await checkFile(COMEDIANS))) {
         return;
     }
 
+    await checkFile(CLIENTS, true);
+
+    const comediansData = await fs.readFile("comedians.json", "utf-8");
+    const comedians = JSON.parse(comediansData);
+
     http.createServer(async (req, res) => {
        try {
-        const segments = req.url.split("/").filter(Boolean);   
+        const segments = req.url.split("/").filter(Boolean);  
+        
+        res.setHeader("Access-Control-Allow-Origin", "*");
 
         if (req.method === 'GET' && segments[0] === 'comedians') {
             
-            const data = await fs.readFile("comedians.json", "utf-8");
-            
-
-            if (segments.length === 2) {
-                const comedian = JSON.parse(data).find(c => c.id === segments[1]);
-
-                if(!comedian) {
-                    sendError(res, 404, "Стендапер не найден");
-                    return;
-                }
-
-                sendData(res, JSON.stringify(comedian));
-                return;
-            }
-
-            sendData(res, data);
+            handleComediansRequest(req, res, comedians, segments);
             return;
         } 
 
         if (req.method === 'POST' && segments[0] === 'clients') {
-            // POST / clients 
-            // Добавление клиента
+            handleAddClient(req, res);
+            return;
         }
 
         if (req.method === 'GET' && segments[0] === 'clients' && segments.length === 2) {
-            // GET / clients / ticket
-            // Получение клиента по тикету
+            const ticket = segments[1];
+            handleClientsRequest(req, res, ticket);
+            return;
         }
 
         if (req.method === 'PATCH' && segments[0] === 'clients' && segments.length === 2) {
-            // PATCH / clients / ticket
-            // Обновление клиента по тикету
+            
+            handleUpdateClient(req, res, segments);
+            return;
         }
         sendError(res, 404, "Сайт не найден");
        } catch (error) {
