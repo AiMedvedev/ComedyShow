@@ -1,5 +1,5 @@
 import { CLIENTS } from "../index.js";
-import { sendData, sendError } from "./send.js";
+import { sendError } from "./send.js";
 import fs from 'node:fs/promises';
 
 export const handleAddClient = (req, res) => {
@@ -45,7 +45,6 @@ export const handleAddClient = (req, res) => {
             clients.push(newClient);
 
             await fs.writeFile(CLIENTS, JSON.stringify(clients))
-            //sendData(res, clients);
 
         } catch (error) {
             console.log("error: ", error);

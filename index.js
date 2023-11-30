@@ -1,25 +1,25 @@
 import http from 'node:http';
 import fs from 'node:fs/promises';
-import { sendData, sendError } from './modules/send.js';
-import { checkFile } from './modules/checkFile.js';
+import { sendError } from './modules/send.js';
+import { checkFileExist, createFileIfNotExist } from './modules/checkFile.js';
 import { handleAddClient } from './modules/handleAddClient.js';
 import { handleComediansRequest } from './modules/handleComediansRequest.js';
 import { handleClientsRequest } from './modules/handleClientsRequest.js';
 import { handleUpdateClient } from './modules/handleUpdateClient.js';
 
-const PORT = '8080';
+const PORT = 8080;
 const COMEDIANS = './comedians.json';
 export const CLIENTS = './clients.json';
 
 
 const startServer = async () => {
-    if (!(await checkFile(COMEDIANS))) {
+    if (!(await checkFileExist(COMEDIANS))) {
         return;
     }
 
-    await checkFile(CLIENTS, true);
+    await createFileIfNotExist(CLIENTS);
 
-    const comediansData = await fs.readFile("comedians.json", "utf-8");
+    const comediansData = await fs.readFile(COMEDIANS, "utf-8");
     const comedians = JSON.parse(comediansData);
 
     http.createServer(async (req, res) => {
