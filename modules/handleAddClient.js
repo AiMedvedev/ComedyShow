@@ -45,7 +45,7 @@ export const handleAddClient = (req, res) => {
             clients.push(newClient);
 
             await fs.writeFile(CLIENTS, JSON.stringify(clients))
-            //sendData(res, clients);
+            sendData(res, clients);
 
         } catch (error) {
             console.log("error: ", error);
