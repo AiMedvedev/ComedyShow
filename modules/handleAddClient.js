@@ -1,5 +1,5 @@
 import { CLIENTS } from "../index.js";
-import { sendError } from "./send.js";
+import { sendData, sendError } from "./send.js";
 import fs from 'node:fs/promises';
 
 export const handleAddClient = (req, res) => {
